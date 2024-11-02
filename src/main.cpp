@@ -1,4 +1,5 @@
 #include <SFML/Graphics.hpp>
+#include <list>
 #include "Map.h"
 #include "Tank.h"
 #include "Pathfinding.h"
@@ -46,19 +47,6 @@ int countAliveTanks(const std::vector<Tank>& tanks, const std::vector<Tank::Colo
     return count;
 }
 
-// Enumeración de los power-ups
-// Qué sucede: Se definen los diferentes tipos de power-ups disponibles en el juego.
-// Por qué sucede: Para permitir efectos especiales que los jugadores puedan utilizar durante el juego.
-enum PowerUp {
-    NONE,
-    DOUBLE_TURN,
-    MOVE_PRECISION,
-    ATTACK_PRECISION,
-    ATTACK_POWER
-};
-
-// Control del número de turnos adicionales por power-up de doble turno
-int turnControl[2] = {0, 0};  // `turnControl[0]` para jugador 1, `turnControl[1]` para jugador 2
 
 int main() {
     // Inicializar la semilla de números aleatorios
@@ -96,11 +84,7 @@ int main() {
     globalTimerText.setFillColor(sf::Color::White);
     globalTimerText.setPosition(window.getSize().x - 180, mapSize * cellSize);
 
-    sf::Text powerUpText;
-    powerUpText.setFont(font);
-    powerUpText.setCharacterSize(24);
-    powerUpText.setFillColor(sf::Color::White);
-    powerUpText.setPosition(10, mapSize * cellSize + 25);
+    
 
     // Crear el mapa y generar obstáculos
     // Qué sucede: Se inicializa el mapa y se colocan obstáculos en celdas aleatorias.
@@ -162,14 +146,8 @@ int main() {
 
     // Variables para el modo disparo
     bool isShootingMode = false;  // Indica si el modo disparo está activado
-    Bullet* activeBullet = nullptr;  // Puntero a la bala activa en el juego
+    std::list<Bullet> bullets;  // Puntero a la bala activa en el juego
     bool hasShot = false;  // Indica si el tanque ya disparó en el turno actual
-
-    // Variables para el sistema de power-ups
-    PowerUp playerPowerUp[2] = { NONE, NONE };  // Power-ups asignados a cada jugador
-    bool isPowerUpActive = false;  // Indica si un power-up está activo
-    bool powerUpActivated = false;  // Indica si un power-up fue activado en el turno actual
-    bool powerUpConsumed = false;  // Indica si el power-up fue consumido
 
     // Definir colores de tanques para cada jugador
     std::vector<Tank::Color> player1Colors = {Tank::Color::BLUE, Tank::Color::RED}; // <-- Corrección aquí
@@ -251,7 +229,7 @@ int main() {
             // Qué sucede: Permite al tanque disparar hacia un objetivo.
             // Por qué sucede: Los tanques necesitan atacar para eliminar a los enemigos.
             // Qué deberíamos esperar: Activación del modo disparo y selección de un objetivo para atacar.
-            if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::D && selectedTank != nullptr && !powerUsed && !powerUpActivated) {
+            if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::D && selectedTank != nullptr) {
                 if (selectedPower == '\0') {
                     selectedPower = 'D';
                     powerUsed = true;
@@ -268,53 +246,28 @@ int main() {
                 int targetX = event.mouseButton.x / cellSize;
                 int targetY = event.mouseButton.y / cellSize;
 
-                activeBullet = new Bullet(selectedTank->getGridX(), selectedTank->getGridY(), targetX, targetY, selectedTank->getId());
+                // Añadimos un nuevo objeto Bullet a la lista 
+                bullets.emplace_back(selectedTank->getGridX(), selectedTank->getGridY(), targetX, targetY, selectedTank->getId());
 
-                // Salir del modo disparo y marcar que se ha disparado en este turno
+                // Salimos del modo disparo y marcamos que se ha disparado en este turno
                 isShootingMode = false;
                 hasShot = true;
             }
 
-            // Detectar la tecla P para activar un power-up
-            // Qué sucede: Se activa el power-up del jugador actual si está disponible.
-            // Por qué sucede: Los power-ups permiten obtener ventajas estratégicas durante el juego.
-            if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::P && !powerUsed) {
-                if (playerPowerUp[currentPlayer - 1] != NONE && !powerUpConsumed) {
-                    isPowerUpActive = true;
-                    powerUpActivated = true;
-                    powerUpConsumed = true;
-                    std::cout << "Power-up activado: " << playerPowerUp[currentPlayer - 1] << "\n";
-                }
-            }
         }
-
-        // Lógica para asignar power-ups aleatoriamente
-        // Qué sucede: Cada turno, hay una probabilidad del 30% de recibir un power-up.
-        // Por qué sucede: Añade un elemento de sorpresa y estrategia al juego.
-        if (!isPowerUpActive && std::rand() % 100 < 30) {
-            playerPowerUp[currentPlayer - 1] = static_cast<PowerUp>(std::rand() % 4 + 1);
-        }
-
-        // Mostrar el power-up actual en la pantalla
-        std::string powerUpName;
-        switch (playerPowerUp[currentPlayer - 1]) {
-            case DOUBLE_TURN: powerUpName = "Doble Turno"; break;
-            case MOVE_PRECISION: powerUpName = "Precisión de Movimiento"; break;
-            case ATTACK_PRECISION: powerUpName = "Precisión de Ataque"; break;
-            case ATTACK_POWER: powerUpName = "Poder de Ataque"; break;
-            default: powerUpName = "Ninguno"; break;
-        }
-        powerUpText.setString("Power-up: " + powerUpName);
 
         // Actualizar la bala en cada frame
         // Qué sucede: Mueve la bala y verifica si impacta un tanque o el borde del mapa.
         // Por qué sucede: Para simular el movimiento de la bala después de un disparo.
-        if (activeBullet != nullptr) {
+        for (auto it = bullets.begin(); it != bullets.end(); ) {
             bool destroyBullet = false;
-            activeBullet->update(gameMap, tanks, destroyBullet);
+            it->update(gameMap, tanks, destroyBullet);
+
+            // Eliminamos la bala si debe ser destruida
             if (destroyBullet) {
-                delete activeBullet;
-                activeBullet = nullptr;
+                it = bullets.erase(it);  // Borrado seguro de la lista
+            } else {
+                ++it;  // Solo avanzamos el iterador si no se eliminó el elemento
             }
         }
 
@@ -331,6 +284,7 @@ int main() {
         int player1TanksAlive = countAliveTanks(tanks, player1Colors);
         int player2TanksAlive = countAliveTanks(tanks, player2Colors);
 
+        // Declaración del ganador y cierre del juego
         if (remainingTime <= 0 || player1TanksAlive == 0 || player2TanksAlive == 0) {
             // Declarar al ganador
             if (player1TanksAlive > player2TanksAlive) {
@@ -340,31 +294,23 @@ int main() {
             } else {
                 std::cout << "Empate, ambos jugadores tienen la misma cantidad de tanques vivos.\n";
             }
-            delete activeBullet;
-            activeBullet = nullptr;
-            window.close();  // Cerrar el juego
+
+            bullets.clear();  // Vaciar todas las balas activas al cerrar el juego
+            window.close();   // Cerrar el juego
         }
 
-        // Cambiar de turno cada 15 segundos o cuando se cumplan turnos adicionales por power-up
-        if (turnClock.getElapsedTime().asSeconds() >= 15.0f || turnControl[currentPlayer - 1] > 0) {
-            if (turnControl[currentPlayer - 1] > 0) {
-                turnControl[currentPlayer - 1]--;  // Reducir turnos adicionales si existen
-            } else {
-                currentPlayer = (currentPlayer == 1) ? 2 : 1;  // Cambiar al otro jugador
-            }
+        // Cambiar de turno cada 15 segundos 
+        if (turnClock.getElapsedTime().asSeconds() >= 15.0f) { 
+            currentPlayer = (currentPlayer == 1) ? 2 : 1;  // Cambiar al otro jugador
 
             turnClock.restart();
-            powerUsed = false;
-            selectedPower = '\0';
             selectedTank = nullptr;
             currentPath.clear();
             hasShot = false;
-            powerUpActivated = false;  // Reiniciar el estado de power-up
-            powerUpConsumed = false;
+                    
 
-            // Limpiar bala activa al final del turno
-            delete activeBullet;
-            activeBullet = nullptr;
+            // Limpiar la lista de balas activas al final del turno
+            bullets.clear();
         }
 
         // Limpiar la ventana antes de dibujar el siguiente frame
@@ -394,14 +340,13 @@ int main() {
         }
 
         // Dibujar la bala si hay una activa
-        if (activeBullet != nullptr) {
-            activeBullet->draw(window, cellSize);
-        }
+        for (auto& bullet : bullets) {
+        bullet.draw(window, cellSize);
+    }
 
         // Dibujar el texto del turno, el temporizador global y el power-up actual
         window.draw(turnText);
         window.draw(globalTimerText);
-        window.draw(powerUpText);
 
         // Mostrar el contenido dibujado en la ventana
         window.display();
