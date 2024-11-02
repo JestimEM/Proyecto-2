@@ -12,10 +12,10 @@ Map::Map(int size) : size(size), connections(size * size, std::vector<int>(size 
 }
 
 void Map::loadTextures() {
-    if (!obstacleTexture.loadFromFile("/home/jestim/Escritorio/proyecto 2/Proyecto-2/src/imagenes/obstaculo.png")) {
+    if (!obstacleTexture.loadFromFile("/home/ubuntu/Desktop/Proyecto-2/src/imagenes/obstaculo.png")) {
         std::cerr << "Error al cargar la textura del obstáculo." << std::endl;
     }
-    if (!emptyCellTexture.loadFromFile("/home/jestim/Escritorio/proyecto 2/Proyecto-2/src/imagenes/forest.jpg")) {
+    if (!emptyCellTexture.loadFromFile("/home/ubuntu/Desktop/Proyecto-2/src/imagenes/forest.jpg")) {
         std::cerr << "Error al cargar la textura de la celda vacía." << std::endl;
     }
 }

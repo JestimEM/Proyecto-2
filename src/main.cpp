@@ -120,8 +120,6 @@ int main() {
     Tank* selectedTank = nullptr;  // Puntero al tanque seleccionado por el jugador
     bool waitingForBFSClick = false;  // Indica si estamos esperando un clic para el movimiento con BFS
     bool waitingForDijkstraClick = false;  // Indica si estamos esperando un clic para el movimiento con Dijkstra
-    bool powerUsed = false;  // Indica si el jugador ya usó un poder en este turno
-    char selectedPower = '\0';  // Poder seleccionado ('M', 'D', 'P'), `\0` si no se ha seleccionado ninguno
     std::vector<Cell> currentPath;  // Almacena la ruta calculada del tanque seleccionado
     sf::Clock globalClock;  // Temporizador global para el tiempo total del juego
     sf::Clock turnClock;  // Temporizador para controlar la duración de cada turno
@@ -176,12 +174,11 @@ int main() {
             }
 
             // Detectar la tecla M para activar el movimiento del tanque
-            if (event.type == sf::Event::KeyPressed && selectedTank != nullptr && !powerUsed) {
-                if (event.key.code == sf::Keyboard::M && selectedPower == '\0') {
-                    selectedPower = 'M';
-                    powerUsed = true;
+            if (event.type == sf::Event::KeyPressed && selectedTank != nullptr) {
+                if (event.key.code == sf::Keyboard::M) {
+                    int randomDecision = std::rand() % 2;  // Decidir entre movimiento BFS o aleatorio
+
                     if (selectedTank->getTankColor() == Tank::Color::BLUE || selectedTank->getTankColor() == Tank::Color::CYAN) {
-                        int randomDecision = std::rand() % 2;
                         if (randomDecision == 0) {
                             std::cout << "Usando BFS para mover tanque azul/celeste\n";
                             waitingForBFSClick = true;  // Esperar clic para definir destino
@@ -190,7 +187,6 @@ int main() {
                             currentPath = moveRandomly(selectedTank->getGridX(), selectedTank->getGridY(), gameMap, tanks);
                         }
                     } else if (selectedTank->getTankColor() == Tank::Color::RED || selectedTank->getTankColor() == Tank::Color::YELLOW) {
-                        int randomDecision = std::rand() % 10;
                         if (randomDecision < 8) {
                             std::cout << "Usando Dijkstra para mover tanque rojo/amarillo\n";
                             waitingForDijkstraClick = true;  // Esperar clic para definir destino
@@ -202,14 +198,11 @@ int main() {
                 } 
             }
 
+
             // Detectar la tecla D para activar el modo disparo del tanque
             if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::D && selectedTank != nullptr) {
-                if (selectedPower == '\0') {
-                    selectedPower = 'D';
-                    powerUsed = true;
-                    isShootingMode = true;  // Activar el modo disparo
-                    std::cout << "Modo disparo activado\n";
-                }
+                isShootingMode = true;  // Activar el modo disparo
+                std::cout << "Modo disparo activado\n";
             }
 
             // Detectar clic en el objetivo durante el modo disparo
@@ -224,8 +217,8 @@ int main() {
                 isShootingMode = false;
                 hasShot = true;
             }
+             }
 
-        }
 
         // Actualizar la bala en cada frame
         for (auto it = bullets.begin(); it != bullets.end(); ) {
@@ -313,7 +306,7 @@ int main() {
         bullet.draw(window, cellSize);
     }
 
-        // Dibujar el texto del turno, el temporizador global y el power-up actual
+        // Dibujar el texto del turno, el temporizador global 
         window.draw(turnText);
         window.draw(globalTimerText);
 

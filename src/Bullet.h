@@ -18,7 +18,7 @@ public:
 private:
     float posX, posY; 
     float dirX, dirY;  
-    float speed = 0.1f;  
+    float speed = 0.2f;  
     int shooterId; 
 
     // Nuevas funciones para dividir la función update
