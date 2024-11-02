@@ -13,17 +13,11 @@
 #include <climits>
 
 // Función para generar un número aleatorio entre dos valores
-// Qué sucede: Genera un número aleatorio entre `min` y `max`.
-// Por qué sucede: Se utiliza para colocar tanques o generar otros elementos aleatoriamente en el mapa.
-// Qué deberíamos esperar: Un número aleatorio dentro del rango especificado.
 int getRandomPosition(int min, int max) {
     return std::rand() % (max - min + 1) + min;
 }
 
 // Función para verificar si una celda está ocupada por un tanque
-// Qué sucede: Revisa si un tanque está en la posición dada.
-// Por qué sucede: Es importante para evitar colisiones y asegurarse de que los tanques no ocupen la misma posición.
-// Qué deberíamos esperar: `true` si la posición está ocupada por un tanque, `false` si está libre.
 bool isPositionOccupied(int x, int y, const std::vector<Tank>& tanks) {
     for (const Tank& tank : tanks) {
         if (tank.getGridX() == x && tank.getGridY() == y) {
@@ -34,9 +28,6 @@ bool isPositionOccupied(int x, int y, const std::vector<Tank>& tanks) {
 }
 
 // Función para contar los tanques vivos de un jugador según su color
-// Qué sucede: Cuenta cuántos tanques de un color específico están aún activos.
-// Por qué sucede: Para determinar si un jugador ha perdido todos sus tanques.
-// Qué deberíamos esperar: El número de tanques vivos de un jugador.
 int countAliveTanks(const std::vector<Tank>& tanks, const std::vector<Tank::Color>& playerColors) {
     int count = 0;
     for (const Tank& tank : tanks) {
@@ -57,9 +48,6 @@ int main() {
     const int cellSize = 30; // Tamaño de cada celda (en píxeles)
 
     // Crear ventana del juego
-    // Qué sucede: Se crea una ventana para mostrar el juego.
-    // Por qué sucede: La ventana es la interfaz principal donde se desarrolla el juego.
-    // Qué deberíamos esperar: Una ventana gráfica que representa el campo de juego.
     sf::RenderWindow window(sf::VideoMode(mapSize * cellSize, mapSize * cellSize + 50), "Tank Attack!");
 
     // Cargar la fuente para los textos del juego
@@ -70,8 +58,6 @@ int main() {
     }
 
     // Crear el texto para el contador de turnos y el temporizador global
-    // Qué sucede: Se inicializan los elementos de texto para mostrar el estado del juego.
-    // Por qué sucede: Se proporciona retroalimentación visual a los jugadores (turnos y tiempo).
     sf::Text turnText;
     turnText.setFont(font);
     turnText.setCharacterSize(24);
@@ -87,14 +73,10 @@ int main() {
     
 
     // Crear el mapa y generar obstáculos
-    // Qué sucede: Se inicializa el mapa y se colocan obstáculos en celdas aleatorias.
-    // Por qué sucede: Los obstáculos añaden dificultad y estrategia al movimiento de los tanques.
     Map gameMap(mapSize);
     gameMap.generateObstacles(10);  // Generar con un 10% de obstáculos
 
     // Crear los tanques del jugador 1 y del jugador 2
-    // Qué sucede: Se añaden los tanques de cada jugador a la lista de tanques.
-    // Por qué sucede: Cada jugador debe tener sus tanques representados en el mapa.
     std::vector<Tank> tanks;
 
     // Añadir tanques para el jugador 1 (colores azul y rojo)
@@ -162,9 +144,6 @@ int main() {
                 window.close();
 
             // Detectar clic en un tanque para seleccionarlo
-            // Qué sucede: El jugador puede seleccionar un tanque para moverlo o atacar.
-            // Por qué sucede: Cada turno, un jugador debe poder seleccionar y mover sus tanques.
-            // Qué deberíamos esperar: El tanque seleccionado se indica visualmente y está listo para moverse.
             if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
                 int mouseX = event.mouseButton.x / cellSize;
                 int mouseY = event.mouseButton.y / cellSize;
@@ -197,8 +176,6 @@ int main() {
             }
 
             // Detectar la tecla M para activar el movimiento del tanque
-            // Qué sucede: Permite al jugador mover el tanque seleccionado.
-            // Por qué sucede: Los tanques deben ser capaces de moverse en el campo de batalla.
             if (event.type == sf::Event::KeyPressed && selectedTank != nullptr && !powerUsed) {
                 if (event.key.code == sf::Keyboard::M && selectedPower == '\0') {
                     selectedPower = 'M';
@@ -226,9 +203,6 @@ int main() {
             }
 
             // Detectar la tecla D para activar el modo disparo del tanque
-            // Qué sucede: Permite al tanque disparar hacia un objetivo.
-            // Por qué sucede: Los tanques necesitan atacar para eliminar a los enemigos.
-            // Qué deberíamos esperar: Activación del modo disparo y selección de un objetivo para atacar.
             if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::D && selectedTank != nullptr) {
                 if (selectedPower == '\0') {
                     selectedPower = 'D';
@@ -239,9 +213,6 @@ int main() {
             }
 
             // Detectar clic en el objetivo durante el modo disparo
-            // Qué sucede: El tanque dispara hacia la posición seleccionada.
-            // Por qué sucede: El disparo permite eliminar tanques enemigos.
-            // Qué deberíamos esperar: Creación de una bala que viaja hacia el objetivo.
             if (isShootingMode && event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left && !hasShot) {
                 int targetX = event.mouseButton.x / cellSize;
                 int targetY = event.mouseButton.y / cellSize;
@@ -257,8 +228,6 @@ int main() {
         }
 
         // Actualizar la bala en cada frame
-        // Qué sucede: Mueve la bala y verifica si impacta un tanque o el borde del mapa.
-        // Por qué sucede: Para simular el movimiento de la bala después de un disparo.
         for (auto it = bullets.begin(); it != bullets.end(); ) {
             bool destroyBullet = false;
             it->update(gameMap, tanks, destroyBullet);
